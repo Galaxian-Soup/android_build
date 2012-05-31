@@ -42,8 +42,15 @@ endif # build_mac_version is 10.6
 HOST_GLOBAL_CFLAGS += -fPIC
 HOST_NO_UNDEFINED_LDFLAGS := -Wl,-undefined,error
 
-HOST_CC := $(CC)
-HOST_CXX := $(CXX)
+host_gcc_version := $(shell gcc --version)
+ifneq ($(filter Apple Inc. build 5658, $(host_gcc_version)),)
+ # On Xcode 4.3 and later force the use of the gnu compatible compilers
+ HOST_CC := gcc
+ HOST_CXX := g++
+else
+ HOST_CC := $(CC)
+ HOST_CXX := $(CXX)
+endif
 HOST_AR := $(AR)
 HOST_STRIP := $(STRIP)
 HOST_STRIP_COMMAND = $(HOST_STRIP) --strip-debug $< -o $@
@@ -53,7 +60,11 @@ HOST_JNILIB_SUFFIX := .jnilib
 
 HOST_GLOBAL_CFLAGS += \
 	-include $(call select-android-config-h,darwin-x86)
-HOST_RUN_RANLIB_AFTER_COPYING := true
+ifneq ($(filter 10.7.%, $(build_mac_version)),)
+       HOST_RUN_RANLIB_AFTER_COPYING := false
+else
+       HOST_RUN_RANLIB_AFTER_COPYING := true
+endif
 HOST_GLOBAL_ARFLAGS := cqs
 
 HOST_CUSTOM_LD_COMMAND := true
